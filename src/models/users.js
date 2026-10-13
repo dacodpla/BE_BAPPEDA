@@ -1,52 +1,30 @@
-// In-memory user repository. Replace this module with a DB-backed implementation
-// (e.g. Prisma, Knex) when a database is added — controllers depend only on this
-// interface: findById(id), findByEmail(email), verifyPassword(user, password),
-// toPublic(user).
+// SQLite-backed user repository. Interface is unchanged from the in-memory
+// version: findById, findByEmail, verifyPassword, toPublic, create.
 
 const bcrypt = require('bcryptjs')
 const crypto = require('crypto')
-const { ROLES } = require('../constants/roles')
+const db = require('../db')
 
-const SEED_PASSWORD = 'Password1!'
-const SEED_HASH = bcrypt.hashSync(SEED_PASSWORD, 10)
-
-const users = [
-  {
-    id: 'usr_emp_001',
-    email: 'employee@bappeda.go.id',
-    passwordHash: SEED_HASH,
-    name: 'Andi Pratama',
-    role: ROLES.EMPLOYEE,
-    rank: 'III/b',
-    department: 'Perencanaan Ekonomi',
-  },
-  {
-    id: 'usr_apr_001',
-    email: 'approver@bappeda.go.id',
-    passwordHash: SEED_HASH,
-    name: 'Siti Rahayu',
-    role: ROLES.APPROVER,
-    rank: 'IV/a',
-    department: 'Perencanaan Ekonomi',
-  },
-  {
-    id: 'usr_adm_001',
-    email: 'admin@bappeda.go.id',
-    passwordHash: SEED_HASH,
-    name: 'Budi Santoso',
-    role: ROLES.ADMIN,
-    rank: 'IV/b',
-    department: 'Sekretariat',
-  },
-]
+function fromRow(row) {
+  if (!row) return null
+  return {
+    id: row.id,
+    email: row.email,
+    passwordHash: row.password_hash,
+    name: row.name,
+    role: row.role,
+    rank: row.rank,
+    department: row.department,
+    annualBudget: row.annual_budget,
+  }
+}
 
 async function findById(id) {
-  return users.find((u) => u.id === id) || null
+  return fromRow(db.prepare('SELECT * FROM users WHERE id = ?').get(id))
 }
 
 async function findByEmail(email) {
-  const needle = String(email || '').toLowerCase()
-  return users.find((u) => u.email.toLowerCase() === needle) || null
+  return fromRow(db.prepare('SELECT * FROM users WHERE email = ?').get(String(email || '')))
 }
 
 async function verifyPassword(user, plainPassword) {
@@ -67,20 +45,14 @@ function toPublic(user) {
   }
 }
 
-// Convenience for future callers.
-async function create({ email, password, name, role, rank, department }) {
+async function create({ email, password, name, role, rank, department, annualBudget = 0 }) {
+  const id = `usr_${crypto.randomUUID()}`
   const passwordHash = await bcrypt.hash(password, 10)
-  const user = {
-    id: `usr_${crypto.randomUUID()}`,
-    email,
-    passwordHash,
-    name,
-    role,
-    rank,
-    department,
-  }
-  users.push(user)
-  return user
+  db.prepare(
+    `INSERT INTO users (id, email, password_hash, name, role, rank, department, annual_budget)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+  ).run(id, email, passwordHash, name, role, rank, department, annualBudget)
+  return findById(id)
 }
 
 module.exports = { findById, findByEmail, verifyPassword, toPublic, create }

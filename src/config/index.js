@@ -1,6 +1,8 @@
+const path = require('path')
 require('dotenv').config()
 
 const isProd = process.env.NODE_ENV === 'production'
+const root = path.resolve(__dirname, '..', '..')
 
 function required(name, fallback) {
   const value = process.env[name] ?? fallback
@@ -30,6 +32,23 @@ const config = {
   authRateLimit: {
     windowMs: Number(process.env.AUTH_RATE_LIMIT_WINDOW_MS || 15 * 60 * 1000),
     max: Number(process.env.AUTH_RATE_LIMIT_MAX || 20),
+  },
+
+  db: {
+    // Use ':memory:' in tests.
+    file: process.env.DB_FILE || path.join(root, 'data', 'sipedis.db'),
+  },
+
+  upload: {
+    dir: process.env.UPLOAD_DIR || path.join(root, 'uploads'),
+    maxFileMb: Number(process.env.UPLOAD_MAX_MB || 5),
+    maxFilesPerRequest: Number(process.env.UPLOAD_MAX_FILES || 10),
+  },
+
+  policy: {
+    // Province of the BAPPEDA office. Destinations here use the in-province rate.
+    homeProvince: process.env.HOME_PROVINCE || 'Jawa Barat',
+    maxTripDays: Number(process.env.POLICY_MAX_TRIP_DAYS || 14),
   },
 }
 

@@ -1,0 +1,16 @@
+const TRANSPORTS = Object.freeze(['PESAWAT', 'MOBIL_DINAS', 'KERETA', 'BUS'])
+
+const ZONES = Object.freeze({
+  IN_PROVINCE: 'IN_PROVINCE',
+  OUT_PROVINCE: 'OUT_PROVINCE',
+})
+
+// PLACEHOLDER flat transport estimates per trip (integer Rupiah) by mode and zone.
+const TRANSPORT_ESTIMATE = Object.freeze({
+  PESAWAT: { IN_PROVINCE: 800000, OUT_PROVINCE: 2500000 },
+  MOBIL_DINAS: { IN_PROVINCE: 300000, OUT_PROVINCE: 900000 },
+  KERETA: { IN_PROVINCE: 200000, OUT_PROVINCE: 600000 },
+  BUS: { IN_PROVINCE: 150000, OUT_PROVINCE: 450000 },
+})
+
+module.exports = { TRANSPORTS, ZONES, TRANSPORT_ESTIMATE }
